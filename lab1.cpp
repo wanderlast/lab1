@@ -38,7 +38,7 @@
 #define WINDOW_WIDTH  800
 #define WINDOW_HEIGHT 600
 
-#define MAX_PARTICLES 4000
+#define MAX_PARTICLES 6000
 #define GRAVITY 0.1
 
 //X Windows variables
@@ -90,16 +90,25 @@ int main(void)
 	Game game;
 	game.n=0;
 
+	//make this work iteratively -- you can do it in a loop making them descend downwards
 	//declare a box shape
-	game.box[0].width = 100;
-	game.box[0].height = 10;
-	game.box[0].center.x = 120 + 5*65;
-	game.box[0].center.y = 500 - 5*60;
-	
-	game.box[1].width = 100;
-	game.box[1].height = 10;
-	game.box[1].center.x = 120 + 5*65 + 50;
-	game.box[1].center.y = 500 - 5*60 - 30;
+	for (int i = 0; i < 5; i++)
+	{
+	    game.box[i].width = 100;
+	    game.box[i].height = 10;
+	    game.box[i].center.x = 120 + (i * 100);
+	    game.box[i].center.y = 500 - (i * 60);
+	    
+// 	    game.box[1].width = 100;
+// 	    game.box[1].height = 10;
+// 	    game.box[1].center.x = 120 + 4*65;
+// 	    game.box[1].center.y = 500 - 4*60;
+// 	    
+// 	    game.box[2].width = 100;
+// 	    game.box[2].height = 10;
+// 	    game.box[2].center.x = 120 + 6*65;
+// 	    game.box[2].center.y = 500 - 6*60;
+	}
 
 	//start animation
 	while(!done) {
@@ -182,8 +191,8 @@ void makeParticle(Game *game, int x, int y) {
 	Particle *p = &game->particle[game->n];
 	p->s.center.x = x;
 	p->s.center.y = y;
-	p->velocity.y = rnd()*1.0 - 0.5;
-	p->velocity.x = 1.0 + rnd()*0.1;
+	p->velocity.y = 1 - rnd()*0.8;
+	p->velocity.x = 1.0 + rnd()*0.5;
 	game->n++;
 }
 
@@ -255,13 +264,13 @@ void movement(Game *game)
 	  p->velocity.y -= GRAVITY;
 	
 	  //check for collision with shapes...
-	  for (int j = 0; j < 2; j++){
+	  for (int j = 0; j < 5; j++){
 		Shape *s = &game->box[j];
 		if (p->s.center.y < s->center.y + s->height &&
 		    p->s.center.y > s->center.y - s->height &&
 		    p->s.center.x >= s->center.x - s->width &&
 		    p->s.center.x <= s->center.x + s->width){
-			p->velocity.y *= -0.25;
+			p->velocity.y *= -0.2;
 			p->s.center.y = s->center.y + s->height + 0.01;
 	      }
 	  }
@@ -285,7 +294,7 @@ void render(Game *game)
 	//draw box
 	Shape *s;
 	glColor3ub(90,140,90);
-	for (int j = 0; j < 2; j++){
+	for (int j = 0; j < 5; j++){
 		s = &game->box[j];
 		glPushMatrix();
 		glTranslatef(s->center.x, s->center.y, s->center.z);
