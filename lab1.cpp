@@ -98,16 +98,6 @@ int main(void)
 	    game.box[i].height = 10;
 	    game.box[i].center.x = 120 + (i * 100);
 	    game.box[i].center.y = 500 - (i * 60);
-	    
-// 	    game.box[1].width = 100;
-// 	    game.box[1].height = 10;
-// 	    game.box[1].center.x = 120 + 4*65;
-// 	    game.box[1].center.y = 500 - 4*60;
-// 	    
-// 	    game.box[2].width = 100;
-// 	    game.box[2].height = 10;
-// 	    game.box[2].center.x = 120 + 6*65;
-// 	    game.box[2].center.y = 500 - 6*60;
 	}
 
 	//start animation
