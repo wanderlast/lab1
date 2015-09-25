@@ -40,6 +40,7 @@
 
 #define MAX_PARTICLES 6000
 #define GRAVITY 0.1
+#define MAX_BOXES 5
 
 //X Windows variables
 Display *dpy;
@@ -64,7 +65,7 @@ struct Particle {
 };
 
 struct Game {
-	Shape box[5];
+	Shape box[MAX_BOXES];
 	Particle particle[MAX_PARTICLES];
 	int n;
 	int lastMousex, lastMousey;
@@ -92,7 +93,7 @@ int main(void)
 
 	//make this work iteratively -- you can do it in a loop making them descend downwards
 	//declare a box shape
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < MAX_BOXES; i++)
 	{
 	    game.box[i].width = 100;
 	    game.box[i].height = 10;
@@ -254,7 +255,7 @@ void movement(Game *game)
 	  p->velocity.y -= GRAVITY;
 	
 	  //check for collision with shapes...
-	  for (int j = 0; j < 5; j++){
+	  for (int j = 0; j < MAX_BOXES; j++){
 		Shape *s = &game->box[j];
 		if (p->s.center.y < s->center.y + s->height &&
 		    p->s.center.y > s->center.y - s->height &&
@@ -284,7 +285,7 @@ void render(Game *game)
 	//draw box
 	Shape *s;
 	glColor3ub(90,140,90);
-	for (int j = 0; j < 5; j++){
+	for (int j = 0; j < MAX_BOXES; j++){
 		s = &game->box[j];
 		glPushMatrix();
 		glTranslatef(s->center.x, s->center.y, s->center.z);
