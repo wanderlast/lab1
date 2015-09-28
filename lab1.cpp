@@ -35,7 +35,7 @@
 #include <X11/keysym.h>
 #include <GL/glx.h>
 
-#define WINDOW_WIDTH  800
+#define WINDOW_WIDTH  900
 #define WINDOW_HEIGHT 600
 
 #define MAX_PARTICLES 6000
@@ -96,9 +96,9 @@ int main(void)
 	for (int i = 0; i < MAX_BOXES; i++)
 	{
 	    game.box[i].width = 100;
-	    game.box[i].height = 10;
-	    game.box[i].center.x = 120 + (i * 100);
-	    game.box[i].center.y = 500 - (i * 60);
+	    game.box[i].height = 20;
+	    game.box[i].center.x = 120 + (i * 120);
+	    game.box[i].center.y = 500 - (i * 70);
 	}
 
 	//start animation
@@ -187,42 +187,42 @@ void makeParticle(Game *game, int x, int y) {
 	game->n++;
 }
 
-void check_mouse(XEvent *e, Game *game)
-{
-	static int savex = 0;
-	static int savey = 0;
-	//static int n = 0;
-
-	if (e->type == ButtonRelease) {
-		return;
-	}
-	if (e->type == ButtonPress) {
-		if (e->xbutton.button==1) {
-			//Left button was pressed
-			int y = WINDOW_HEIGHT - e->xbutton.y;
-			for (int i=0; i < 10; i++)
-				makeParticle(game, e->xbutton.x, y);
-			return;
-		}
-		if (e->xbutton.button==3) {
-			//Right button was pressed
-			return;
-		}
-	}
-	//Did the mouse move?
-	if (savex != e->xbutton.x || savey != e->xbutton.y) {
-		savex = e->xbutton.x;
-		savey = e->xbutton.y;
-		int y = WINDOW_HEIGHT - e->xbutton.y;
-		for (int i=0; i < 10; i++)
-			makeParticle(game, e->xbutton.x, y);
-		//if (++n < 10)
-		//return;
-		game->lastMousex = e-> xbutton.x;
-		game->lastMousey = y;
-		
-	}
-}
+// void check_mouse(XEvent *e, Game *game)
+// {
+// 	static int savex = 0;
+// 	static int savey = 0;
+// 	//static int n = 0;
+// 
+// 	if (e->type == ButtonRelease) {
+// 		return;
+// 	}
+// 	if (e->type == ButtonPress) {
+// 		if (e->xbutton.button==1) {
+// 			//Left button was pressed
+// 			int y = WINDOW_HEIGHT - e->xbutton.y;
+// 			for (int i=0; i < 10; i++)
+// 				makeParticle(game, e->xbutton.x, y);
+// 			return;
+// 		}
+// 		if (e->xbutton.button==3) {
+// 			//Right button was pressed
+// 			return;
+// 		}
+// 	}
+// 	//Did the mouse move?
+// 	if (savex != e->xbutton.x || savey != e->xbutton.y) {
+// 		savex = e->xbutton.x;
+// 		savey = e->xbutton.y;
+// 		int y = WINDOW_HEIGHT - e->xbutton.y;
+// 		for (int i=0; i < 10; i++)
+// 			makeParticle(game, e->xbutton.x, y);
+// 		//if (++n < 10)
+// 		//return;
+// 		game->lastMousex = e-> xbutton.x;
+// 		game->lastMousey = y;
+// 		
+// 	}
+// }
 
 int check_keys(XEvent *e, Game *game)
 {
@@ -233,6 +233,9 @@ int check_keys(XEvent *e, Game *game)
 			return 1;
 		}
 		//You may check other keys here.
+		if (key == XK_b){
+			//turn on bubbler
+		}
 
 	}
 	return 0;
@@ -316,6 +319,3 @@ void render(Game *game)
 		glPopMatrix();
 	}
 }
-
-
-
