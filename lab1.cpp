@@ -75,7 +75,7 @@ struct Game {
 void initXWindows(void);
 void init_opengl(void);
 void cleanupXWindows(void);
-void check_mouse(XEvent *e, Game *game);
+//void check_mouse(XEvent *e, Game *game);
 int check_keys(XEvent *e, Game *game);
 void movement(Game *game);
 void render(Game *game);
@@ -106,7 +106,7 @@ int main(void)
 		while(XPending(dpy)) {
 			XEvent e;
 			XNextEvent(dpy, &e);
-			check_mouse(&e, &game);
+			//check_mouse(&e, &game);
 			done = check_keys(&e, &game);
 		}
 		movement(&game);
@@ -235,6 +235,9 @@ int check_keys(XEvent *e, Game *game)
 		//You may check other keys here.
 		if (key == XK_b){
 			//turn on bubbler
+			for (int i=0; i < 20; i++){
+				makeParticle(game, 120, 550);
+			}
 		}
 
 	}
@@ -247,9 +250,6 @@ void movement(Game *game)
 
 	if (game->n <= 0)
 		return;
-
-	for (int i=0; i < 10; i++)
-	  makeParticle(game, game->lastMousex, game->lastMousey);
 	
 	for (int i=0; i < game->n; i++){
 	  p = &game->particle[i];
@@ -282,9 +282,7 @@ void render(Game *game)
 {
 	float w, h;
 	glClear(GL_COLOR_BUFFER_BIT);
-	//Draw shapes...
-	
-	
+	//Draw shapes...	
 	//draw box
 	Shape *s;
 	glColor3ub(90,140,90);
