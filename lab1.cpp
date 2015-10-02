@@ -38,7 +38,7 @@
 #define WINDOW_WIDTH  900
 #define WINDOW_HEIGHT 600
 
-#define MAX_PARTICLES 6000
+#define MAX_PARTICLES 10000
 #define GRAVITY 0.1
 #define MAX_BOXES 5
 
@@ -76,11 +76,12 @@ struct Game {
 void initXWindows(void);
 void init_opengl(void);
 void cleanupXWindows(void);
-//void check_mouse(XEvent *e, Game *game);
 int check_keys(XEvent *e, Game *game);
 void movement(Game *game);
 void render(Game *game);
+void checkBubbler(Game *game);
 
+int bubbler = 0;
 
 int main(void)
 {
@@ -103,7 +104,7 @@ int main(void)
 	}
 	
 	//declare a circle shape
-	game.circle.center.x = 900;
+	game.circle.center.x = 875;
 	game.circle.center.y = 0;
 	game.circle.radius = 180;
 
@@ -117,6 +118,7 @@ int main(void)
 		}
 		movement(&game);
 		render(&game);
+		checkBubbler(&game);
 		glXSwapBuffers(dpy, win);
 	}
 	cleanupXWindows();
@@ -193,42 +195,16 @@ void makeParticle(Game *game, int x, int y) {
 	game->n++;
 }
 
-// void check_mouse(XEvent *e, Game *game)
-// {
-// 	static int savex = 0;
-// 	static int savey = 0;
-// 	//static int n = 0;
-// 
-// 	if (e->type == ButtonRelease) {
-// 		return;
-// 	}
-// 	if (e->type == ButtonPress) {
-// 		if (e->xbutton.button==1) {
-// 			//Left button was pressed
-// 			int y = WINDOW_HEIGHT - e->xbutton.y;
-// 			for (int i=0; i < 10; i++)
-// 				makeParticle(game, e->xbutton.x, y);
-// 			return;
-// 		}
-// 		if (e->xbutton.button==3) {
-// 			//Right button was pressed
-// 			return;
-// 		}
-// 	}
-// 	//Did the mouse move?
-// 	if (savex != e->xbutton.x || savey != e->xbutton.y) {
-// 		savex = e->xbutton.x;
-// 		savey = e->xbutton.y;
-// 		int y = WINDOW_HEIGHT - e->xbutton.y;
-// 		for (int i=0; i < 10; i++)
-// 			makeParticle(game, e->xbutton.x, y);
-// 		//if (++n < 10)
-// 		//return;
-// 		game->lastMousex = e-> xbutton.x;
-// 		game->lastMousey = y;
-// 		
-// 	}
-// }
+void checkBubbler(Game *game)
+{
+	if (bubbler){
+		if (game->n < MAX_PARTICLES){
+			for(int i=0; i < 20; i++){
+				makeParticle(game, 120, 550);
+			}
+		}
+	}	
+}
 
 int check_keys(XEvent *e, Game *game)
 {
@@ -241,9 +217,7 @@ int check_keys(XEvent *e, Game *game)
 		//You may check other keys here.
 		if (key == XK_b){
 			//turn on bubbler
-			for (int i=0; i < 20; i++){
-				makeParticle(game, 120, 550);
-			}
+			bubbler ^= 1;
 		}
 
 	}
@@ -277,8 +251,23 @@ void movement(Game *game)
 	  }
 	  
 	  //circle collision
-	  for
-	  
+	  float d0,d1,dist;
+	  d0 = p->s.center.x - game->circle.center.x;
+	  d1 = p->s.center.y - game->circle.center.y;
+	  dist = sqrt(d0*d0 + d1*d1);
+	  if (dist <= game->circle.radius){
+		//p->velocity.y = 0.0;
+		//float v[2];
+		d0 /= dist;
+		d1 /= dist;
+		d0 *= game->circle.radius * 1.01;
+		d1 *= game->circle.radius * 1.01;
+		p->s.center.x = game->circle.center.x + d0;
+		p->s.center.y = game->circle.center.y + d1;
+		p->velocity.x += d0 * 0.003;
+		p->velocity.y += d1 * 0.005;
+	  }
+
 	  //check for off-screen
 	  if (p->s.center.y < 0.0 || p->s.center.y > WINDOW_HEIGHT) {
 		//sstd::cout << "off screen" << std::endl;
