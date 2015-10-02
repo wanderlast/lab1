@@ -66,6 +66,7 @@ struct Particle {
 
 struct Game {
 	Shape box[MAX_BOXES];
+	Shape circle;
 	Particle particle[MAX_PARTICLES];
 	int n;
 	int lastMousex, lastMousey;
@@ -100,6 +101,11 @@ int main(void)
 	    game.box[i].center.x = 120 + (i * 120);
 	    game.box[i].center.y = 500 - (i * 70);
 	}
+	
+	//declare a circle shape
+	game.circle.center.x = 900;
+	game.circle.center.y = 0;
+	game.circle.radius = 180;
 
 	//start animation
 	while(!done) {
@@ -258,6 +264,7 @@ void movement(Game *game)
 	  p->velocity.y -= GRAVITY;
 	
 	  //check for collision with shapes...
+	  //box collision
 	  for (int j = 0; j < MAX_BOXES; j++){
 		Shape *s = &game->box[j];
 		if (p->s.center.y < s->center.y + s->height &&
@@ -268,6 +275,10 @@ void movement(Game *game)
 			p->s.center.y = s->center.y + s->height + 0.01;
 	      }
 	  }
+	  
+	  //circle collision
+	  for
+	  
 	  //check for off-screen
 	  if (p->s.center.y < 0.0 || p->s.center.y > WINDOW_HEIGHT) {
 		//sstd::cout << "off screen" << std::endl;
@@ -283,6 +294,34 @@ void render(Game *game)
 	float w, h;
 	glClear(GL_COLOR_BUFFER_BIT);
 	//Draw shapes...	
+	
+	//draw circle
+	//do this only if our first time through the loop
+	static int firsttime = 1;
+	static int verts[60][2]; //10 vertices, 2 dimensions perspective
+	static int n = 60;
+	glColor3ub(70,120,100);
+	if (firsttime){
+		float angle = 0.0;
+		float inc = (3.14159 * 2.0) / (float)n;
+		
+		for(int i = 0; i < n; i++){
+			verts[i][0] = cos(angle) * game->circle.radius + game->circle.center.x;
+			verts[i][1] = sin(angle) * game->circle.radius + game->circle.center.y;
+			angle += inc;
+		}
+		firsttime = 0;	  
+	}
+	
+	glPushMatrix();
+	glBegin(GL_TRIANGLE_FAN);
+		for(int i = 0; i < n; i++){
+			glVertex2i(verts[i][0], verts[i][1]);
+		}
+
+	glEnd();
+	glPopMatrix();
+	
 	//draw box
 	Shape *s;
 	glColor3ub(90,140,90);
