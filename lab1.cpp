@@ -38,7 +38,7 @@
 #define WINDOW_WIDTH  900
 #define WINDOW_HEIGHT 600
 
-#define MAX_PARTICLES 6000
+#define MAX_PARTICLES 10000
 #define GRAVITY 0.1
 #define MAX_BOXES 5
 
@@ -66,6 +66,7 @@ struct Particle {
 
 struct Game {
 	Shape box[MAX_BOXES];
+	Shape circle;
 	Particle particle[MAX_PARTICLES];
 	int n;
 	int lastMousex, lastMousey;
@@ -75,11 +76,12 @@ struct Game {
 void initXWindows(void);
 void init_opengl(void);
 void cleanupXWindows(void);
-//void check_mouse(XEvent *e, Game *game);
 int check_keys(XEvent *e, Game *game);
 void movement(Game *game);
 void render(Game *game);
+void checkBubbler(Game *game);
 
+int bubbler = 0;
 
 int main(void)
 {
@@ -100,6 +102,11 @@ int main(void)
 	    game.box[i].center.x = 120 + (i * 120);
 	    game.box[i].center.y = 500 - (i * 70);
 	}
+	
+	//declare a circle shape
+	game.circle.center.x = 875;
+	game.circle.center.y = 0;
+	game.circle.radius = 180;
 
 	//start animation
 	while(!done) {
@@ -111,6 +118,7 @@ int main(void)
 		}
 		movement(&game);
 		render(&game);
+		checkBubbler(&game);
 		glXSwapBuffers(dpy, win);
 	}
 	cleanupXWindows();
@@ -187,42 +195,16 @@ void makeParticle(Game *game, int x, int y) {
 	game->n++;
 }
 
-// void check_mouse(XEvent *e, Game *game)
-// {
-// 	static int savex = 0;
-// 	static int savey = 0;
-// 	//static int n = 0;
-// 
-// 	if (e->type == ButtonRelease) {
-// 		return;
-// 	}
-// 	if (e->type == ButtonPress) {
-// 		if (e->xbutton.button==1) {
-// 			//Left button was pressed
-// 			int y = WINDOW_HEIGHT - e->xbutton.y;
-// 			for (int i=0; i < 10; i++)
-// 				makeParticle(game, e->xbutton.x, y);
-// 			return;
-// 		}
-// 		if (e->xbutton.button==3) {
-// 			//Right button was pressed
-// 			return;
-// 		}
-// 	}
-// 	//Did the mouse move?
-// 	if (savex != e->xbutton.x || savey != e->xbutton.y) {
-// 		savex = e->xbutton.x;
-// 		savey = e->xbutton.y;
-// 		int y = WINDOW_HEIGHT - e->xbutton.y;
-// 		for (int i=0; i < 10; i++)
-// 			makeParticle(game, e->xbutton.x, y);
-// 		//if (++n < 10)
-// 		//return;
-// 		game->lastMousex = e-> xbutton.x;
-// 		game->lastMousey = y;
-// 		
-// 	}
-// }
+void checkBubbler(Game *game)
+{
+	if (bubbler){
+		if (game->n < MAX_PARTICLES){
+			for(int i=0; i < 20; i++){
+				makeParticle(game, 120, 550);
+			}
+		}
+	}	
+}
 
 int check_keys(XEvent *e, Game *game)
 {
@@ -235,9 +217,7 @@ int check_keys(XEvent *e, Game *game)
 		//You may check other keys here.
 		if (key == XK_b){
 			//turn on bubbler
-			for (int i=0; i < 20; i++){
-				makeParticle(game, 120, 550);
-			}
+			bubbler ^= 1;
 		}
 
 	}
@@ -258,6 +238,7 @@ void movement(Game *game)
 	  p->velocity.y -= GRAVITY;
 	
 	  //check for collision with shapes...
+	  //box collision
 	  for (int j = 0; j < MAX_BOXES; j++){
 		Shape *s = &game->box[j];
 		if (p->s.center.y < s->center.y + s->height &&
@@ -268,6 +249,25 @@ void movement(Game *game)
 			p->s.center.y = s->center.y + s->height + 0.01;
 	      }
 	  }
+	  
+	  //circle collision
+	  float d0,d1,dist;
+	  d0 = p->s.center.x - game->circle.center.x;
+	  d1 = p->s.center.y - game->circle.center.y;
+	  dist = sqrt(d0*d0 + d1*d1);
+	  if (dist <= game->circle.radius){
+		//p->velocity.y = 0.0;
+		//float v[2];
+		d0 /= dist;
+		d1 /= dist;
+		d0 *= game->circle.radius * 1.01;
+		d1 *= game->circle.radius * 1.01;
+		p->s.center.x = game->circle.center.x + d0;
+		p->s.center.y = game->circle.center.y + d1;
+		p->velocity.x += d0 * 0.003;
+		p->velocity.y += d1 * 0.005;
+	  }
+
 	  //check for off-screen
 	  if (p->s.center.y < 0.0 || p->s.center.y > WINDOW_HEIGHT) {
 		//sstd::cout << "off screen" << std::endl;
@@ -283,6 +283,34 @@ void render(Game *game)
 	float w, h;
 	glClear(GL_COLOR_BUFFER_BIT);
 	//Draw shapes...	
+	
+	//draw circle
+	//do this only if our first time through the loop
+	static int firsttime = 1;
+	static int verts[60][2]; //10 vertices, 2 dimensions perspective
+	static int n = 60;
+	glColor3ub(70,120,100);
+	if (firsttime){
+		float angle = 0.0;
+		float inc = (3.14159 * 2.0) / (float)n;
+		
+		for(int i = 0; i < n; i++){
+			verts[i][0] = cos(angle) * game->circle.radius + game->circle.center.x;
+			verts[i][1] = sin(angle) * game->circle.radius + game->circle.center.y;
+			angle += inc;
+		}
+		firsttime = 0;	  
+	}
+	
+	glPushMatrix();
+	glBegin(GL_TRIANGLE_FAN);
+		for(int i = 0; i < n; i++){
+			glVertex2i(verts[i][0], verts[i][1]);
+		}
+
+	glEnd();
+	glPopMatrix();
+	
 	//draw box
 	Shape *s;
 	glColor3ub(90,140,90);
