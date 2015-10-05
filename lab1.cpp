@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <cstring>
+#include <unistd.h>
 #include <cmath>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
@@ -41,7 +42,7 @@ extern "C" {
 #define WINDOW_WIDTH  900
 #define WINDOW_HEIGHT 600
 
-#define MAX_PARTICLES 10000
+#define MAX_PARTICLES 50000
 #define GRAVITY 0.1
 #define MAX_BOXES 5
 
@@ -65,6 +66,7 @@ struct Shape {
 struct Particle {
 	Shape s;
 	Vec velocity;
+	Vec color;
 };
 
 struct Game {
@@ -79,7 +81,7 @@ struct Game {
 void initXWindows(void);
 void init_opengl(void);
 void cleanupXWindows(void);
-int check_keys(XEvent *e, Game *game);
+int check_keys(XEvent *e);
 void movement(Game *game);
 void render(Game *game);
 void checkBubbler(Game *game);
@@ -106,7 +108,7 @@ int main(void)
 	}
 	
 	//declare a circle shape
-	game.circle.center.x = 875;
+	game.circle.center.x = 835;
 	game.circle.center.y = 0;
 	game.circle.radius = 180;
 
@@ -115,8 +117,7 @@ int main(void)
 		while(XPending(dpy)) {
 			XEvent e;
 			XNextEvent(dpy, &e);
-			//check_mouse(&e, &game);
-			done = check_keys(&e, &game);
+			done = check_keys(&e);
 		}
 		movement(&game);
 		render(&game);
@@ -180,6 +181,10 @@ void init_opengl(void)
 	glOrtho(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1, 1);
 	//Set the screen background color
 	glClearColor(0.1, 0.1, 0.1, 1.0);
+	
+	//Do this to allow fonts
+	glEnable(GL_TEXTURE_2D);
+	initialize_fonts();
 }
 
 #define rnd() (float)rand() / (float)RAND_MAX
@@ -192,8 +197,13 @@ void makeParticle(Game *game, int x, int y) {
 	Particle *p = &game->particle[game->n];
 	p->s.center.x = x;
 	p->s.center.y = y;
-	p->velocity.y = 1 - rnd()*0.8;
-	p->velocity.x = 1.0 + rnd()*0.5;
+	p->velocity.y = 1 - rnd()*0.6;
+	p->velocity.x = rnd() - 0.1;
+	
+	// randomize color slightly
+	p->color.x = rand()%40 + 30;
+	p->color.y = rand()%105 + 100;
+	p->color.z = 245;
 	game->n++;
 }
 
@@ -202,14 +212,14 @@ void checkBubbler(Game *game)
 	if (bubbler){
 		//as long as we are not at our maximum # of particles, keep creating them
 		if (game->n < MAX_PARTICLES){
-			for(int i=0; i < 20; i++){
+			for(int i=0; i < 50; i++){
 				makeParticle(game, 120, 550);
 			}
 		}
 	}	
 }
 
-int check_keys(XEvent *e, Game *game)
+int check_keys(XEvent *e)
 {
 	//Was there input from the keyboard?
 	if (e->type == KeyPress) {
@@ -250,6 +260,7 @@ void movement(Game *game)
 		    p->s.center.x <= s->center.x + s->width){
 			p->velocity.y *= -0.2;
 			p->s.center.y = s->center.y + s->height + 0.01;
+			p->velocity.x += 0.015;
 	      }
 	  }
 	  
@@ -283,7 +294,7 @@ void movement(Game *game)
 
 void render(Game *game)
 {
-	Rect r;
+	Rect r[6];
 	float w, h;
 	glClear(GL_COLOR_BUFFER_BIT);
 	//Draw shapes...	
@@ -336,7 +347,8 @@ void render(Game *game)
 	//draw all particles here
 	for (int i=0; i < game->n; i++){
 		glPushMatrix();
-		glColor3ub(150,160,220);
+		Particle *p = &game->particle[i];
+		glColor3ub(p->color.x, p->color.y,  p->color.z);
 		Vec *c = &game->particle[i].s.center;
 		w = 2;
 		h = 2;
@@ -349,18 +361,39 @@ void render(Game *game)
 		glPopMatrix();		
 	}
 	
-
-	//draw the text on the boxes
-	r.bot = yres - 20;
-	r.left = 10;
-	r.center = 0;
-	unsigned int cref = 0x00ffffff;
-  ggprint8b(&r, 16, cref, "B - Bigfoot");
-	ggprint8b(&r, 16, cref, "F - Forest");
-	ggprint8b(&r, 16, cref, "S - Silhouette");
-	ggprint8b(&r, 16, cref, "T - Trees");
-	ggprint8b(&r, 16, cref, "U - Umbrella");
-	ggprint8b(&r, 16, cref, "R - Rain");
-	ggprint8b(&r, 16, cref, "D - Deflection");
-	ggprint8b(&r, 16, cref, "N - Sounds");
+	//draw the text
+	// "waterfall model"
+	r[5].bot = WINDOW_HEIGHT - 20;
+	r[5].left = 10;
+	r[5].center = 0;
+	unsigned int cref = 0x00ffffff; // rgb value for white
+	
+	ggprint8b(&r[5],  16,  cref,  "Waterfall Model");
+	
+	for (int i = 0; i < 5; i++){
+		// pick the box,  reusing our previously defined shape
+		s = &game->box[i];
+		
+		// center the text within the box
+		r[i].bot = s->center.y - 5;
+		r[i].left = s->center.x;
+		r[i].center = 1;
+		
+		// depending on the box,  put the appropriate text in it
+		if (i == 0) {
+			ggprint8b(&r[i],  16,  cref,  "Requirements");
+		}
+		if (i == 1) {
+			ggprint8b(&r[i],  16,  cref,  "Design");
+		}
+		if (i == 2) {
+			ggprint8b(&r[i],  16,  cref,  "Coding");
+		}
+		if (i == 3) {
+			ggprint8b(&r[i],  16,  cref,  "Testing");
+		}
+		if (i == 4) {
+			ggprint8b(&r[i],  16,  cref,  "Maintenance");
+		}
+	}
 }
