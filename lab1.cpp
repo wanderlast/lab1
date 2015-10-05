@@ -34,6 +34,9 @@
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <GL/glx.h>
+extern "C" {
+	#include "fonts.h"
+}
 
 #define WINDOW_WIDTH  900
 #define WINDOW_HEIGHT 600
@@ -93,7 +96,6 @@ int main(void)
 	Game game;
 	game.n=0;
 
-	//make this work iteratively -- you can do it in a loop making them descend downwards
 	//declare a box shape
 	for (int i = 0; i < MAX_BOXES; i++)
 	{
@@ -198,6 +200,7 @@ void makeParticle(Game *game, int x, int y) {
 void checkBubbler(Game *game)
 {
 	if (bubbler){
+		//as long as we are not at our maximum # of particles, keep creating them
 		if (game->n < MAX_PARTICLES){
 			for(int i=0; i < 20; i++){
 				makeParticle(game, 120, 550);
@@ -280,6 +283,7 @@ void movement(Game *game)
 
 void render(Game *game)
 {
+	Rect r;
 	float w, h;
 	glClear(GL_COLOR_BUFFER_BIT);
 	//Draw shapes...	
@@ -342,6 +346,21 @@ void render(Game *game)
 			glVertex2i(c->x+w, c->y+h);
 			glVertex2i(c->x+w, c->y-h);
 		glEnd();
-		glPopMatrix();
+		glPopMatrix();		
 	}
+	
+
+	//draw the text on the boxes
+	r.bot = yres - 20;
+	r.left = 10;
+	r.center = 0;
+	unsigned int cref = 0x00ffffff;
+  ggprint8b(&r, 16, cref, "B - Bigfoot");
+	ggprint8b(&r, 16, cref, "F - Forest");
+	ggprint8b(&r, 16, cref, "S - Silhouette");
+	ggprint8b(&r, 16, cref, "T - Trees");
+	ggprint8b(&r, 16, cref, "U - Umbrella");
+	ggprint8b(&r, 16, cref, "R - Rain");
+	ggprint8b(&r, 16, cref, "D - Deflection");
+	ggprint8b(&r, 16, cref, "N - Sounds");
 }
